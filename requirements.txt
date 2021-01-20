@@ -1,0 +1,10 @@
+sentencepiece==0.1.95
+mosestokenizer==1.1.0
+sacrebleu==1.4.14
+sacremoses==0.0.43
+tensorboardX==2.1
+pandas==1.2.1
+tqdm==4.56.0
+torch==1.7.1
+torchvision==0.8.2
+torchaudio==0.7.2
