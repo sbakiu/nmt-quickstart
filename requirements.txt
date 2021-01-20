@@ -8,3 +8,4 @@ tqdm==4.56.0
 torch==1.7.1
 torchvision==0.8.2
 torchaudio==0.7.2
+#fairseq==0.10.1
