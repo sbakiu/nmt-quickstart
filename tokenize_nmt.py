@@ -1,7 +1,10 @@
 # code for training SentencePiece and tokenize the data
-
+import glob
 import shutil
 import uuid
+from pathlib import Path
+
+import pandas as pd
 
 import sentencepiece as spm
 from functools import partial
@@ -170,6 +173,9 @@ def write_tokenized_result(series, path):
             line = ' '.join(tokens)
             f.write(f"{line}\n")
 
+
+DATASET = "toy-ende" # note: the full dataset is 'scb-mt-en-th-2020'
+DATA_DIR = os.path.join(".", DATASET)
 
 split_dataset_dir = os.path.join('dataset', 'split', DATASET)
 
