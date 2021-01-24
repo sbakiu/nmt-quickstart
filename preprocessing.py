@@ -18,10 +18,6 @@ from functools import partial
 
 
 logging.basicConfig(level=logging.INFO)
-logging.info(pd.__version__)
-
-GERMAN_LANGUAGE = "de"
-ENGLISH_LANGUAGE = "en"
 
 
 # functions for cleaning and filtering the data
@@ -66,7 +62,8 @@ CLEANING_RULES = [
 
 def clean_data(csv_dir, unicode_norm='none'):
 
-    csv_file_paths = glob.glob(os.path.join(csv_dir, '*.tsv'))
+    path = Path.joinpath(csv_dir, '*.tsv')
+    csv_file_paths = glob.glob(str(path))
     file_to_df_dictionary = {}
 
     for csv_file_path in csv_file_paths:
@@ -94,16 +91,8 @@ def clean_data(csv_dir, unicode_norm='none'):
     return file_to_df_dictionary
 
 
-# clean the dataset
-NORM_CODE = 'NFKC'
-DATASET = "toy-ende"  # note: the full dataset is 'scb-mt-en-th-2020'
-DATA_DIR = os.path.join(".", DATASET)
-
-file_to_df = clean_data(DATA_DIR, NORM_CODE)
-
-
 def merge_csv(out_directory, df_list):
-    out_path = Path.joinpath(out_directory, "en-de.merged.csv")
+    out_path = Path.joinpath(out_directory, f"{ENGLISH_LANGUAGE}-{GERMAN_LANGUAGE}.merged.csv")
 
     merged_item_ids = []
 
@@ -144,17 +133,10 @@ def merge_csv(out_directory, df_list):
             is_en_uniq = not merged_en_texts_is_duplicated[index]
             is_de_uniq = not merged_de_texts_is_duplicated[index]
 
-            en, de = merged_en_texts.iloc[index].replace(
-                '\n', ''), merged_de_texts.iloc[index].replace('\n', '')
+            en = merged_en_texts.iloc[index].replace('\n', '')
+            de = merged_de_texts.iloc[index].replace('\n', '')
 
             writer.writerow([sentence_id, en, de, is_en_uniq, is_de_uniq])
-
-
-# merge data
-cwd = Path.cwd()
-out_dir = Path.joinpath(cwd, "merged", DATASET)
-Path.mkdir(out_dir, parents=True, exist_ok=True)
-merge_csv(out_dir, file_to_df)
 
 
 # code for splitting the dataset
@@ -172,7 +154,7 @@ def split_dataset(path_merged_csv, out_dir, train_ratio, val_ratio, test_ratio, 
     """
     df = pd.read_csv(path_merged_csv, encoding='utf-8', engine='python')
     df.is_en_uniq.astype(bool)
-    df.is_th_uniq.astype(bool)
+    df.is_de_uniq.astype(bool)
 
     df['dataset'] = df['sentence_id'].apply(lambda x: x.split(':')[-1])
     train_df, val_df, test_df = None, None, None
@@ -185,12 +167,11 @@ def split_dataset(path_merged_csv, out_dir, train_ratio, val_ratio, test_ratio, 
 
     print('')
 
-
     n_val = int(N * val_ratio)
     n_test = int(N * test_ratio)
 
     val_test_df = df[(df['is_en_uniq'] == True) & (
-            df['is_th_uniq'] == True)].sample(n=n_val + n_test, random_state=seed)
+            df['is_de_uniq'] == True)].sample(n=n_val + n_test, random_state=seed)
 
     val_test_ids = val_test_df.sentence_id.tolist()
 
@@ -213,22 +194,38 @@ def split_dataset(path_merged_csv, out_dir, train_ratio, val_ratio, test_ratio, 
     train_df = train_df.drop(columns=['dataset'])
     test_df = test_df.drop(columns=['dataset'])
 
-
     val_df = val_df.drop(columns=['dataset'])
     val_df.to_csv(os.path.join(
-        out_dir, f'en-th.merged.val.csv'), encoding='utf-8')
+        out_dir, f'en-de.merged.val.csv'), encoding='utf-8')
 
     train_df.to_csv(os.path.join(
-        out_dir, f'en-th.merged.train.csv'), encoding='utf-8')
+        out_dir, f'en-de.merged.train.csv'), encoding='utf-8')
     test_df.to_csv(os.path.join(
-        out_dir, f'en-th.merged.test.csv'), encoding='utf-8')
+        out_dir, f'en-de.merged.test.csv'), encoding='utf-8')
 
     print('\nDone writing files.')
 
 
-# run the code
-path_merged_csv = os.path.join('dataset', 'merged', 'toy', 'en-de.merged.csv')
-out_dir = os.path.join('dataset', 'split', 'toy')
+# merge data
+
+GERMAN_LANGUAGE = "de"
+ENGLISH_LANGUAGE = "en"
+
+# clean the dataset
+NORM_CODE = 'NFKC'
+DATASET = "toy-ende"  # note: the full dataset is 'scb-mt-en-th-2020'
+cwd = Path.cwd()
+DATA_DIR = Path.joinpath(cwd, DATASET)
+
+file_to_df = clean_data(DATA_DIR, NORM_CODE)
+
+out_dir = Path.joinpath(cwd, "merged", DATASET)
+Path.mkdir(out_dir, parents=True, exist_ok=True)
+merge_csv(out_dir, file_to_df)
+
+path_merged_csv = Path.joinpath(cwd, "merged", DATASET, 'en-de.merged.csv')
+out_dir = Path.joinpath(cwd, "split", DATASET)
 train_ratio, val_ratio, test_ratio = 0.8, 0.1, 0.1
 seed = 2020
 split_dataset(path_merged_csv, out_dir, train_ratio, val_ratio, test_ratio, seed)
+logging.info("Finished preprocessing.")
