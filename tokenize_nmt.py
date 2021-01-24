@@ -9,6 +9,7 @@ import pandas as pd
 import sentencepiece as spm
 from functools import partial
 import os
+import logging
 
 
 def write_txt(path, sentences):
@@ -17,11 +18,12 @@ def write_txt(path, sentences):
         for sent in sentences:
             f.write(str(sent) + '\n')
 
+
 def train_spm(train_dataset_path, side, vocab_size, spm_out_dir, lower):
     """Train a SentencePiece model for BPE tokenization.
 
     train_dataset_path: path to training data in csv
-    side: 'th' or 'en'
+    side: 'de' or 'en'
     vocab_size: vocabulary size
     spm_out_dir: output directory to store the trained model
     lower: if true, lower case the text
@@ -34,7 +36,7 @@ def train_spm(train_dataset_path, side, vocab_size, spm_out_dir, lower):
     df = pd.read_csv(train_dataset_path, encoding='utf-8')
 
     if lower:
-        df[side] = df[side].apply(lambda x: x.lower())
+        df[side] = df[side].apply(lambda x: str(x).lower())
 
     sentences = df[side].tolist()
 
@@ -93,21 +95,28 @@ def train_spm(train_dataset_path, side, vocab_size, spm_out_dir, lower):
     return model
 
 
-def spm_tokenize(split_dataset_dir,
-                 src_lang, tgt_lang,
-                 src_uncased, tgt_uncased,
-                 src_spm_vocab_size, tgt_spm_vocab_size,
-                 out_dir, spm_out_dir):
+def spm_tokenize(
+        split_dataset_dir,
+        src_lang,
+        tgt_lang,
+        src_uncased,
+        tgt_uncased,
+        src_spm_vocab_size,
+        tgt_spm_vocab_size,
+        out_dir,
+        spm_out_dir
+):
     """Tokenize the dataset in 'split_dataset_dir' and output the result in 'spm_out_dir'.
 
-        src_lang, tgt_lang: 'th' or 'en'
-        src_uncased, tgt_uncased: if true, lowercasing the text
+        src_lang, tgt_lang: 'de' or 'en'
+        src_uncased, tgt_uncased: if true, lower-casing the text
         src_spm_vocab_size, tgt_spm_vocab_size: vocabulary size
         out_dir: output dir that store the tokenized dataset
         spm_out_dir: output dir of the trained SentencePiece model
     """
 
-    file_paths = glob.glob(os.path.join(split_dataset_dir, '*.csv'))
+    csv_path = Path.joinpath(split_dataset_dir, '*.csv')
+    file_paths = glob.glob(str(csv_path))
     file_paths = list(filter(lambda x: 'train' in x, file_paths))
 
     assert len(file_paths) == 1
@@ -127,7 +136,7 @@ def spm_tokenize(split_dataset_dir,
 
     _tgt_tokenizer = partial(tgt_spm_model.EncodeAsPieces)
 
-    file_paths = glob.glob(os.path.join(split_dataset_dir, '*.csv'))
+    file_paths = glob.glob(str(csv_path))
     for file_path in file_paths:
 
         lang_pair, name, split = Path(file_path).stem.split('.')
@@ -146,14 +155,14 @@ def spm_tokenize(split_dataset_dir,
         tgt_tokens = df[tgt_lang].apply(_tgt_tokenizer)
 
         if not os.path.exists(out_dir):
-            print(f'Create a directiony at `{out_dir}`.')
+            print(f'Create a directory at `{out_dir}`.')
             os.makedirs(out_dir, exist_ok=True)
 
         src_out_path = os.path.join(out_dir, f'{split}.{src_lang}')
         tgt_out_path = os.path.join(out_dir, f'{split}.{tgt_lang}')
 
         print(
-            f'\n - Write tokenized result of {src_lang} langauge of the {split} set, to {src_out_path}')
+            f'\n - Write tokenized result of {src_lang} language of the {split} set, to {src_out_path}')
 
         write_tokenized_result(src_tokens, src_out_path)
 
@@ -174,25 +183,34 @@ def write_tokenized_result(series, path):
             f.write(f"{line}\n")
 
 
-DATASET = "toy-ende" # note: the full dataset is 'scb-mt-en-th-2020'
-DATA_DIR = os.path.join(".", DATASET)
+logging.basicConfig(level=logging.INFO)
+DATASET = "toy-ende"  # note: the full dataset is 'scb-mt-en-th-2020'
+cwd = Path.cwd()
+DATA_DIR = Path.joinpath(cwd, DATASET)
 
-split_dataset_dir = os.path.join('dataset', 'split', DATASET)
+split_dataset_dir = Path.joinpath(cwd, 'split', DATASET)
 
-src_lang = "th"
+src_lang = "de"
 tgt_lang = "en"
 
-src_uncased =  True
-tgt_uncased  = True
+src_uncased = True
+tgt_uncased = True
 
-src_spm_vocab_size  = 10000
-tgt_spm_vocab_size  = 10000
+src_spm_vocab_size = 5000
+tgt_spm_vocab_size = 5000
 
-out_dir = os.path.join('dataset', 'tokenized', DATASET)
-spm_out_dir = os.path.join('dataset', 'spm', DATASET)
+out_dir = Path.joinpath(cwd, 'tokenized', DATASET)
+spm_out_dir = Path.joinpath(cwd, 'spm', DATASET)
 
-spm_tokenize(split_dataset_dir,
-             src_lang, tgt_lang,
-             src_uncased, tgt_uncased,
-             src_spm_vocab_size,tgt_spm_vocab_size,
-             out_dir, spm_out_dir)
+spm_tokenize(
+    split_dataset_dir,
+    src_lang,
+    tgt_lang,
+    src_uncased,
+    tgt_uncased,
+    src_spm_vocab_size,
+    tgt_spm_vocab_size,
+    out_dir,
+    spm_out_dir
+)
+logging.info("Finished tokenization")
