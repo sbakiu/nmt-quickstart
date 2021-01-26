@@ -9,7 +9,11 @@ import logging
 
 from collections import defaultdict
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    format="%(asctime)s %(levelname)-4s %(message)s",
+    level=logging.INFO,
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
 ALBANIAN_LANG_ISO_CODE = "sq"
 ENGLISH_LANG_ISO_CODE = "en"
@@ -17,9 +21,11 @@ ENGLISH_LANG_ISO_CODE = "en"
 cwd = Path.cwd()
 TED_TALKS_DIR = "ted-talks"
 SQ_EN_SUBTITLES_DIR = "subs-en-sq"
+COMBINED_SUBTITLES_DIR = "combined-subs-en-sq"
 JSON_EXTENSION = "json"
 
 DATASET_DIR = cwd.joinpath(TED_TALKS_DIR, SQ_EN_SUBTITLES_DIR)
+COMBINED_DATASET_DIR = cwd.joinpath(TED_TALKS_DIR, COMBINED_SUBTITLES_DIR)
 
 
 def files_in_dir(directory, extension):
@@ -100,6 +106,28 @@ def preprocess_subtitles(subtitles_dir, video_id_input, language):
     return subtitles_ser
 
 
+def merge_subtitles(source_language_subs_df, target_language_subs_df):
+    subtitles_pair_dataframe = pd.concat(
+        [
+            source_language_subs_df.reset_index(drop=True),
+            target_language_subs_df.reset_index(drop=True)
+        ],
+        axis=1
+    )
+    return subtitles_pair_dataframe
+
+
+def persist_df(subtitles_pair_dataframe, dateset_path, video_id_input, source_lang, target_lang):
+    destination_file_name = Path.joinpath(dateset_path, f"{video_id_input}_{source_lang}_{target_lang}.tsv")
+    destination_file_name.parent.mkdir(exist_ok=True)
+    subtitles_pair_dataframe.to_csv(
+        str(destination_file_name),
+        index=False,
+        sep="\t",
+        header=False
+    )
+
+
 files_in_dir_list = files_in_dir(DATASET_DIR, JSON_EXTENSION)
 videos_by_language_dict = get_videoids_by_language(files_in_dir_list)
 
@@ -114,6 +142,8 @@ for video_id in sorted(videos_intersection):
     sentences_ser_sq = preprocess_subtitles(DATASET_DIR, video_id, ALBANIAN_LANG_ISO_CODE)
     sentences_ser_en = preprocess_subtitles(DATASET_DIR, video_id, ENGLISH_LANG_ISO_CODE)
     if len(sentences_ser_sq) == len(sentences_ser_en):
+        subtitles_pair_df = merge_subtitles(sentences_ser_sq, sentences_ser_en)
+        persist_df(subtitles_pair_df, COMBINED_DATASET_DIR, video_id, ALBANIAN_LANG_ISO_CODE, ENGLISH_LANG_ISO_CODE)
         i = i + 1
     df = pd.concat([sentences_ser_sq, sentences_ser_en], axis=1)
     df.head()
