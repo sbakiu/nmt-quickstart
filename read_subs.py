@@ -98,7 +98,8 @@ def normalize_text(input_text, lang):
 def preprocess_subtitles(subtitles_dir, video_id_input, language):
     subtitles_file = f"{str(subtitles_dir)}/VideoID-{video_id_input}-{language}.{JSON_EXTENSION}"
     subtitles_df = pd.read_json(subtitles_file)
-    subtitles_ser = subtitles_df.content
+    subtitles_df = subtitles_df.rename(columns={"content": language})
+    subtitles_ser = subtitles_df[language]
     # all_text = subtitles_ser.str.cat(sep=' ')
     # normalized_text = normalize_text(all_text, language)
     # all_sentences = re.split('(?<=[.!?;]) +', normalized_text)
@@ -123,8 +124,7 @@ def persist_df(subtitles_pair_dataframe, dateset_path, video_id_input, source_la
     subtitles_pair_dataframe.to_csv(
         str(destination_file_name),
         index=False,
-        sep="\t",
-        header=False
+        sep="\t"
     )
 
 
