@@ -151,8 +151,4 @@ for video_id in sorted(videos_intersection):
     # translated_df = pd.DataFrame(zipped, columns=['sq', 'en'])
     # translated_df.head()
 
-logging.info(f"i = {i}")
-videos_intersection
-
-sq = pd.read_json("ted-talks/subs-en-sq/VideoID-54-sq.json")
-en = pd.read_json("ted-talks/subs-en-sq/VideoID-54-en.json")
+logging.info(f"Finished preparing the combined dataset.")
