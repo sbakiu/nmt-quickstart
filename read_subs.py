@@ -108,6 +108,7 @@ def preprocess_subtitles(subtitles_dir, video_id_input, language):
 
 
 def merge_subtitles(source_language_subs_df, target_language_subs_df):
+    logging.info(f"Combining Dataframes")
     subtitles_pair_dataframe = pd.concat(
         [
             source_language_subs_df.reset_index(drop=True),
@@ -120,11 +121,13 @@ def merge_subtitles(source_language_subs_df, target_language_subs_df):
 
 def persist_df(subtitles_pair_dataframe, dateset_path, video_id_input, source_lang, target_lang):
     destination_file_name = Path.joinpath(dateset_path, f"{video_id_input}_{source_lang}_{target_lang}.tsv")
+    logging.info(f"Storing dataframe in file: {str(destination_file_name)}")
     destination_file_name.parent.mkdir(exist_ok=True)
     subtitles_pair_dataframe.to_csv(
         str(destination_file_name),
         index=False,
-        sep="\t"
+        sep="\t",
+        encoding="utf-8"
     )
 
 

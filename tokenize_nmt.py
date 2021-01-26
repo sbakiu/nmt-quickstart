@@ -125,19 +125,30 @@ def spm_tokenize(
     # Train SentencePiece model on train set for src_lang
 
     src_spm_model = train_spm(
-        train_filepath, src_lang, src_spm_vocab_size, spm_out_dir, lower=src_uncased)
+        train_filepath,
+        src_lang,
+        src_spm_vocab_size,
+        spm_out_dir,
+        lower=src_uncased
+    )
 
     _src_tokenizer = partial(src_spm_model.EncodeAsPieces)
 
     # Train SentencePiece model on train set for tgt_lang
 
     tgt_spm_model = train_spm(
-        train_filepath, tgt_lang, tgt_spm_vocab_size, spm_out_dir, lower=tgt_uncased)
+        train_filepath,
+        tgt_lang,
+        tgt_spm_vocab_size,
+        spm_out_dir,
+        lower=tgt_uncased
+    )
 
     _tgt_tokenizer = partial(tgt_spm_model.EncodeAsPieces)
 
     file_paths = glob.glob(str(csv_path))
     for file_path in file_paths:
+        logging.info(f"Processing file_path: {file_path}")
 
         lang_pair, name, split = Path(file_path).stem.split('.')
 
@@ -167,7 +178,7 @@ def spm_tokenize(
         write_tokenized_result(src_tokens, src_out_path)
 
         print(
-            f'\n - Write tokenized result of {tgt_lang} langauge of the {split} set, to {tgt_out_path}')
+            f'\n - Write tokenized result of {tgt_lang} language of the {split} set, to {tgt_out_path}')
 
         write_tokenized_result(tgt_tokens, tgt_out_path)
 
@@ -183,15 +194,24 @@ def write_tokenized_result(series, path):
             f.write(f"{line}\n")
 
 
-logging.basicConfig(level=logging.INFO)
-DATASET = "toy-ende"  # note: the full dataset is 'scb-mt-en-th-2020'
+logging.basicConfig(
+    format="%(asctime)s %(levelname)-4s %(message)s",
+    level=logging.INFO,
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+
+BASE_DIR = "ted-talks"
+DATASET = "combined-subs-en-sq"
+
 cwd = Path.cwd()
-DATA_DIR = Path.joinpath(cwd, DATASET)
+base_path = Path.joinpath(cwd, BASE_DIR)
+DATA_DIR = Path.joinpath(base_path, DATASET)
 
-split_dataset_dir = Path.joinpath(cwd, 'split', DATASET)
+split_dataset_dir = Path.joinpath(base_path, 'split', DATASET)
 
-src_lang = "de"
-tgt_lang = "en"
+GERMAN_LANG_ISO_CODE = "de"
+ENGLISH_LANG_ISO_CODE = "en"
+ALBANIAN_LANG_ISO_CODE = "sq"
 
 src_uncased = True
 tgt_uncased = True
@@ -199,13 +219,13 @@ tgt_uncased = True
 src_spm_vocab_size = 5000
 tgt_spm_vocab_size = 5000
 
-out_dir = Path.joinpath(cwd, 'tokenized', DATASET)
-spm_out_dir = Path.joinpath(cwd, 'spm', DATASET)
+out_dir = Path.joinpath(base_path, 'tokenized', DATASET)
+spm_out_dir = Path.joinpath(base_path, 'spm', DATASET)
 
 spm_tokenize(
     split_dataset_dir,
-    src_lang,
-    tgt_lang,
+    ALBANIAN_LANG_ISO_CODE,
+    ENGLISH_LANG_ISO_CODE,
     src_uncased,
     tgt_uncased,
     src_spm_vocab_size,
