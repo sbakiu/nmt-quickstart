@@ -4,13 +4,10 @@ BASE_DIR=./ted-talks
 TOKENIZED_DIR=$BASE_DIR/tokenized
 BINARIZED_DIR=$TOKENIZED_DIR/8000-joined/
 
-GPU_ID=0
 OUT_DIR='ted-talks/8000-joined'
 MAX_TOKEN=9750
 MAX_EPOCH=15
 
-
-CUDA_VISIBLE_DEVICES=0
 fairseq-train $BINARIZED_DIR \
     --cpu \
     --arch transformer \
@@ -30,7 +27,6 @@ fairseq-train $BINARIZED_DIR \
     --save-dir ./checkpoints/$OUT_DIR \
     --tensorboard-logdir ./checkpoints/$OUT_DIR/log \
     --update-freq 16 \
-    --fp16 \
     --no-epoch-checkpoints \
     --max-epoch $MAX_EPOCH \
     --num-workers 0
