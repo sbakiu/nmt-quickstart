@@ -225,7 +225,7 @@ ALBANIAN_LANG_ISO_CODE = "sq"
 # clean the dataset
 NORM_CODE = 'NFKC'
 BASE_DIR = "ted-talks"
-DATASET = "combined-subs-en-sq"
+DATASET = "combined-subs-sq-en"
 
 cwd = Path.cwd()
 base_path = Path.joinpath(cwd, BASE_DIR)

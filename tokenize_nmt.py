@@ -108,7 +108,7 @@ def spm_tokenize(
 ):
     """Tokenize the dataset in 'split_dataset_dir' and output the result in 'spm_out_dir'.
 
-        src_lang, tgt_lang: 'de' or 'en'
+        src_lang, tgt_lang: 'sq' or 'en'
         src_uncased, tgt_uncased: if true, lower-casing the text
         src_spm_vocab_size, tgt_spm_vocab_size: vocabulary size
         out_dir: output dir that store the tokenized dataset
@@ -201,13 +201,16 @@ logging.basicConfig(
 )
 
 BASE_DIR = "ted-talks"
-DATASET = "combined-subs-en-sq"
+DATASET_EN_SQ = "combined-subs-en-sq"
+DATASET_SQ_EN = "combined-subs-sq-en"
 
 cwd = Path.cwd()
 base_path = Path.joinpath(cwd, BASE_DIR)
-DATA_DIR = Path.joinpath(base_path, DATASET)
+# DATA_DIR_EN_SQ = Path.joinpath(base_path, DATASET_EN_SQ)
+DATA_DIR_SQ_EN = Path.joinpath(base_path, DATASET_SQ_EN)
 
-split_dataset_dir = Path.joinpath(base_path, 'split', DATASET)
+split_dataset_dir_en_sq = base_path.joinpath("split", DATASET_SQ_EN)
+split_dataset_dir_sq_en = base_path.joinpath('split', DATASET_SQ_EN)
 
 GERMAN_LANG_ISO_CODE = "de"
 ENGLISH_LANG_ISO_CODE = "en"
@@ -219,18 +222,32 @@ tgt_uncased = True
 src_spm_vocab_size = 5000
 tgt_spm_vocab_size = 5000
 
-out_dir = Path.joinpath(base_path, 'tokenized', DATASET)
-spm_out_dir = Path.joinpath(base_path, 'spm', DATASET)
+out_dir_en_sq = Path.joinpath(base_path, 'tokenized', DATASET_EN_SQ)
+spm_out_dir_en_sq = Path.joinpath(base_path, 'spm', DATASET_EN_SQ)
+out_dir_sq_en = Path.joinpath(base_path, 'tokenized', DATASET_SQ_EN)
+spm_out_dir_sq_en = Path.joinpath(base_path, 'spm', DATASET_SQ_EN)
 
 spm_tokenize(
-    split_dataset_dir,
+    split_dataset_dir_en_sq,
+    ENGLISH_LANG_ISO_CODE,
+    ALBANIAN_LANG_ISO_CODE,
+    src_uncased,
+    tgt_uncased,
+    src_spm_vocab_size,
+    tgt_spm_vocab_size,
+    out_dir_en_sq,
+    spm_out_dir_en_sq
+)
+
+spm_tokenize(
+    split_dataset_dir_sq_en,
     ALBANIAN_LANG_ISO_CODE,
     ENGLISH_LANG_ISO_CODE,
     src_uncased,
     tgt_uncased,
     src_spm_vocab_size,
     tgt_spm_vocab_size,
-    out_dir,
-    spm_out_dir
+    out_dir_sq_en,
+    spm_out_dir_sq_en
 )
 logging.info("Finished tokenization")
