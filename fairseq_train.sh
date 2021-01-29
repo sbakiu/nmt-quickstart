@@ -6,7 +6,7 @@ BINARIZED_DIR=$TOKENIZED_DIR/8000-joined-sq-en/
 
 OUT_DIR='ted-talks/8000-joined-sq-en'
 MAX_TOKEN=9750
-MAX_EPOCH=15
+MAX_EPOCH=10
 
 fairseq-train $BINARIZED_DIR \
     --cpu \
