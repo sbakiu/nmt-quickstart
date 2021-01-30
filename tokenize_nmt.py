@@ -23,7 +23,7 @@ def train_spm(train_dataset_path, side, vocab_size, spm_out_dir, lower):
     """Train a SentencePiece model for BPE tokenization.
 
     train_dataset_path: path to training data in csv
-    side: 'de' or 'en'
+    side: 'sq' or 'en'
     vocab_size: vocabulary size
     spm_out_dir: output directory to store the trained model
     lower: if true, lower case the text
@@ -39,9 +39,6 @@ def train_spm(train_dataset_path, side, vocab_size, spm_out_dir, lower):
         df[side] = df[side].apply(lambda x: str(x).lower())
 
     sentences = df[side].tolist()
-
-    train_dataset_path = Path(train_dataset_path)
-    current_dir = train_dataset_path.cwd()
 
     case = 'uncased' if lower else 'cased'
     spm_file_prefix = f'spm.{side}.v-{vocab_size}.{case}'
@@ -64,16 +61,24 @@ def train_spm(train_dataset_path, side, vocab_size, spm_out_dir, lower):
             f'\nBegin training SentencePiece model, filename: {spm_file_prefix}.model')
 
         spm.SentencePieceTrainer.Train(
-            f'--input={temp_filepath} --character_coverage=1.0 --model_prefix={spm_file_prefix} --vocab_size={vocab_size}')
+            f'--input={temp_filepath} '
+            f'--character_coverage=1.0 '
+            f'--model_prefix={spm_file_prefix} '
+            f'--vocab_size={vocab_size}'
+        )
 
         spm_model_path = f'./{spm_file_prefix}.model'
         spm_vocab_path = f'./{spm_file_prefix}.vocab'
 
         print(f'Move vocab and model files to {spm_out_dir}')
-        spm_model_path = shutil.move(spm_model_path, os.path.join(
-            spm_out_dir, f'{spm_file_prefix}.model'))
-        spm_vocab_path = shutil.move(spm_vocab_path, os.path.join(
-            spm_out_dir, f'{spm_file_prefix}.vocab'))
+        spm_model_path = shutil.move(
+            spm_model_path,
+            os.path.join(spm_out_dir, f'{spm_file_prefix}.model')
+        )
+        spm_vocab_path = shutil.move(
+            spm_vocab_path,
+            os.path.join(spm_out_dir, f'{spm_file_prefix}.vocab')
+        )
 
         print('\nDone')
 
@@ -123,7 +128,6 @@ def spm_tokenize(
     train_filepath = file_paths[0]
 
     # Train SentencePiece model on train set for src_lang
-
     src_spm_model = train_spm(
         train_filepath,
         src_lang,
@@ -135,7 +139,6 @@ def spm_tokenize(
     _src_tokenizer = partial(src_spm_model.EncodeAsPieces)
 
     # Train SentencePiece model on train set for tgt_lang
-
     tgt_spm_model = train_spm(
         train_filepath,
         tgt_lang,

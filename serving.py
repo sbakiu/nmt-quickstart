@@ -1,4 +1,5 @@
 import logging
+from fairseq.models.transformer import TransformerModel
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)-4s %(message)s",
@@ -6,14 +7,13 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-from fairseq.models.transformer import TransformerModel
-sq2en = TransformerModel.from_pretrained(
-    './checkpoints-sq-en/ted-talks/8000-joined',
+en2sq = TransformerModel.from_pretrained(
+    './checkpoints/ted-talks/8000-joined-en-sq',
     checkpoint_file='checkpoint_best.pt',
     data_name_or_path='ted-talks/tokenized/8000-joined-en-sq',
-    # bpe='subword_nmt',
-    # bpe_codes='data-bin/wmt17_zh_en_full/zh.code'
+    bpe="sentencepiece",  # bpe='subword_nmt',
+    sentencepiece_model="ted-talks/spm/combined-subs-en-sq/spm.sq.v-5000.uncased.model" # bpe_codes='data-bin/wmt17_zh_en_full/zh.code'
 )
 
-translate = sq2en.translate(["Hello", "t"])
+translate = en2sq.translate(["Hello"], beam=1)
 logging.info(f"T: {translate}")
