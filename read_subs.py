@@ -20,8 +20,8 @@ ENGLISH_LANG_ISO_CODE = "en"
 
 cwd = Path.cwd()
 TED_TALKS_DIR = "ted-talks"
-SQ_EN_SUBTITLES_DIR = "subs-en-sq"
-COMBINED_SUBTITLES_DIR = "combined-subs-en-sq"
+SQ_EN_SUBTITLES_DIR = "subs-sq-en"
+COMBINED_SUBTITLES_DIR = "combined-subs-sq-en"
 JSON_EXTENSION = "json"
 
 DATASET_DIR = cwd.joinpath(TED_TALKS_DIR, SQ_EN_SUBTITLES_DIR)
@@ -138,8 +138,9 @@ sq_video_ids = videos_by_language_dict[ALBANIAN_LANG_ISO_CODE]
 en_video_ids = videos_by_language_dict[ENGLISH_LANG_ISO_CODE]
 
 videos_intersection = get_videoids_intersection(sq_video_ids, en_video_ids)
+# Work only with 10 videos
+videos_intersection = sorted(videos_intersection)[:10]
 
-i = 0
 for video_id in sorted(videos_intersection):
     logging.info(f"Video ID: {video_id}")
     sentences_ser_sq = preprocess_subtitles(DATASET_DIR, video_id, ALBANIAN_LANG_ISO_CODE)
@@ -147,11 +148,8 @@ for video_id in sorted(videos_intersection):
     if len(sentences_ser_sq) == len(sentences_ser_en):
         subtitles_pair_df = merge_subtitles(sentences_ser_sq, sentences_ser_en)
         persist_df(subtitles_pair_df, COMBINED_DATASET_DIR, video_id, ALBANIAN_LANG_ISO_CODE, ENGLISH_LANG_ISO_CODE)
-        i = i + 1
+
     df = pd.concat([sentences_ser_sq, sentences_ser_en], axis=1)
     df.head()
-    # zipped = list(zip(sentences_list_sq, sentences_list_en))
-    # translated_df = pd.DataFrame(zipped, columns=['sq', 'en'])
-    # translated_df.head()
 
 logging.info(f"Finished preparing the combined dataset.")

@@ -1,10 +1,9 @@
 #!/bin/bash
 
 BASE_DIR=./ted-talks
-TOKENIZED_DIR=$BASE_DIR/tokenized
-BINARIZED_DIR=$TOKENIZED_DIR/8000-joined-sq-en/
+BINARIZED_DIR=$BASE_DIR/binarized/combined-subs-sq-en/8000-joined-sq-en
 
-OUT_DIR='ted-talks/8000-joined-sq-en'
+OUT_DIR='ted-talks/trained-8000-joined-sq-en'
 MAX_TOKEN=9750
 MAX_EPOCH=10
 
@@ -13,7 +12,8 @@ fairseq-train $BINARIZED_DIR \
     --arch transformer \
     --share-decoder-input-output-embed \
     --optimizer adam \
-    --adam-betas '(0.9, 0.98)' --clip-norm 0.0 \
+    --adam-betas '(0.9, 0.98)' \
+    --clip-norm 0.0 \
     --lr 5e-4 \
     --lr-scheduler inverse_sqrt \
     --warmup-updates 4000 \
