@@ -100,10 +100,7 @@ def preprocess_subtitles(subtitles_dir, video_id_input, language):
     subtitles_df = pd.read_json(subtitles_file)
     subtitles_df = subtitles_df.rename(columns={"content": language})
     subtitles_ser = subtitles_df[language]
-    # all_text = subtitles_ser.str.cat(sep=' ')
-    # normalized_text = normalize_text(all_text, language)
-    # all_sentences = re.split('(?<=[.!?;]) +', normalized_text)
-    # return all_sentences
+
     return subtitles_ser
 
 
@@ -139,7 +136,7 @@ en_video_ids = videos_by_language_dict[ENGLISH_LANG_ISO_CODE]
 
 videos_intersection = get_videoids_intersection(sq_video_ids, en_video_ids)
 # Work only with 10 videos
-videos_intersection = sorted(videos_intersection)[:10]
+videos_intersection = sorted(videos_intersection)
 
 for video_id in sorted(videos_intersection):
     logging.info(f"Video ID: {video_id}")
