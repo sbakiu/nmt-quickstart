@@ -8,7 +8,7 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-with open("en-sq.tmx") as fp:
+with open("../en-sq-data/en-sq.tmx") as fp:
     content = fp.readlines()
     content = "".join(content)
     soup = BeautifulSoup(content, "lxml-xml")
