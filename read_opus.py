@@ -2,13 +2,13 @@ import opustools
 from pathlib import Path
 
 cwd = Path.cwd()
-# opus_get = opustools.OpusGet(
-#     source='sq',
-#     target='en',
-#     directory='OpenSubtitles',
-#     list_resources=True,
-#     download_dir=str(cwd)
-# )
+opus_get = opustools.OpusGet(
+    source='sq',
+    target='en',
+    directory='OpenSubtitles',
+    list_resources=True,
+    download_dir=str(cwd)
+)
 
 opus_reader = opustools.OpusRead(
     source='sq',
@@ -17,6 +17,6 @@ opus_reader = opustools.OpusRead(
     root_directory=str(cwd),
     write=["result.tmx"],
     write_mode="tmx",
-    leave_non_alignments_out=False,
+    leave_non_alignments_out=True,
 )
 opus_reader.printPairs()
