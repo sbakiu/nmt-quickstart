@@ -19,19 +19,21 @@ logging.basicConfig(
 
 
 # functions for cleaning and filtering the data
-def str_strip(lang, text):
+def str_strip(text):
     return str(text).strip()
 
 
-def normalize_unicode(lang, text):
-    """Return the normal form for the Unicode string"""
+def normalize_unicode(text):
+    """
+    Return the normal form for the Unicode string
+    """
 
-    if NORM_CODE is not 'NONE' and NORM_CODE in ['NFC', 'NFD', 'NFKC', 'NFKD']:
+    if NORM_CODE != 'NONE' and NORM_CODE in ['NFC', 'NFD', 'NFKC', 'NFKD']:
         text = unicodedata.normalize(NORM_CODE, text)
     return text
 
 
-def normalize_text(lang, text):
+def normalize_text(text):
     """
     Normalize quotation marks and handle hashtag sequences
     """
@@ -44,7 +46,7 @@ def normalize_text(lang, text):
     return text
 
 
-def html_unescape(lang, text):
+def html_unescape(text):
     """Decoding HTML symbols"""
 
     return html.unescape(text)
@@ -58,54 +60,68 @@ CLEANING_RULES = [
 ]
 
 
-def clean_data(csv_dir, lang1, lang2):
-
-    path = Path.joinpath(csv_dir, '*.tsv')
+def read_input(csv_dir):
+    """
+    Read input data into a df
+    :param csv_dir:
+    :return:
+    """
+    logging.info("Reading input data")
+    path = Path.joinpath(csv_dir, "*.tsv")
     csv_file_paths = glob.glob(str(path))
-    file_to_df_dictionary = {}
+    # file_to_df_dictionary = {}
+    frames = []
 
     for csv_file_path in csv_file_paths:
         # A csv file is returned as a data frame (two-dimensional data structure with labeled axes).
         df = pd.read_csv(
             csv_file_path,
-            encoding='utf-8',
+            encoding="utf-8",
             sep="\t"
         )
-        csv_filename = Path(csv_file_path).stem
+        # csv_filename = Path(csv_file_path).stem
+        # file_to_df_dictionary[csv_filename] = df
+        frames.append(df)
 
-        # clean text in both languages
-        for lang in [lang1, lang2]:
-
-            df[f'{lang}'] = df[f'{lang}'].apply(str)
-
-            for rule in CLEANING_RULES:
-                df[f'{lang}'] = df[f'{lang}'].apply(
-                    lambda x: rule(lang, x)
-                )
-
-        file_to_df_dictionary[csv_filename] = df
-
-    return file_to_df_dictionary
+    result = pd.concat(frames)
+    return result
 
 
-def merge_csv(out_directory, df_list, lang1, lang2):
+def clean_data(df, lang1, lang2):
+    """
+    Clean data
+    :param df: input data frame
+    :param lang1:
+    :param lang2:
+    :return:
+    """
+    logging.info("Cleaning the data")
+    for lang in [lang1, lang2]:
+        df[f'{lang}'] = df[f'{lang}'].apply(str)
+
+        for rule in CLEANING_RULES:
+            df[f'{lang}'] = df[f'{lang}'].apply(
+                lambda x: rule(x)
+            )
+
+    return df
+
+
+def merge_csv(out_directory, df, lang1, lang2):
     logging.info("Merging CSV files")
     out_path = Path.joinpath(out_directory, f"{ALBANIAN_LANG_ISO_CODE}-{ENGLISH_LANG_ISO_CODE}.merged.csv")
 
     merged_item_ids = []
 
-    for dataset_name, df in df_list.items():
+    # for dataset_name, df in df_list.items():
 
-        for index, _ in df.iterrows():
-            sentence_id = f'{index}:{dataset_name}'
-            merged_item_ids.append(sentence_id)
+    # for index, _ in df.iterrows():
+    #     sentence_id = f'{index}'
+    #     merged_item_ids.append(sentence_id)
+    merged_item_ids = df.index.tolist()
+    merged_lang1_texts = df[lang1].apply(lambda x: str(x).strip())
 
-    merged_lang1_texts = pd.concat([df[lang1] for _, df in df_list.items()]).apply(
-        lambda x: str(x).strip()
-    )
-    merged_lang2_texts = pd.concat([df[lang2] for _, df in df_list.items()]).apply(
-        lambda x: str(x).strip()
-    )
+    merged_lang2_texts = df[lang2].apply(lambda x: str(x).strip())
 
     # identify if the text has no duplicate
     merged_lang1_texts_is_duplicated = merged_lang1_texts.duplicated(
@@ -118,12 +134,12 @@ def merge_csv(out_directory, df_list, lang1, lang2):
     with open(out_path, 'w', encoding='utf-8') as f:
         writer = csv.writer(
             f,
-            delimiter=',',
+            delimiter=",",
             quotechar='"',
             quoting=csv.QUOTE_MINIMAL
         )
         writer.writerow([
-            'sentence_id',
+            "sentence_id",
             lang1,
             lang2,
             f"is_{lang1}_uniq",
@@ -158,7 +174,8 @@ def split_dataset(path_merged_csv, out_dir, train_ratio, val_ratio, test_ratio, 
     df[f"is_{lang1}_uniq"].astype(bool)
     df[f"is_{lang2}_uniq"].astype(bool)
 
-    df['dataset'] = df['sentence_id'].apply(lambda x: x.split(':')[-1])
+    # df['dataset'] = df['sentence_id'].apply(lambda x: x.split(':')[-1])
+    df['dataset'] = df['sentence_id']
     train_df, val_df, test_df = None, None, None
 
     N = df.shape[0]
@@ -224,19 +241,24 @@ ALBANIAN_LANG_ISO_CODE = "sq"
 
 # clean the dataset
 NORM_CODE = 'NFKC'
-BASE_DIR = "ted-talks"
+BASE_DIR = "data"
 DATASET = "combined-subs-sq-en"
+input_dir_name = "input"
 
 cwd = Path.cwd()
 base_path = Path.joinpath(cwd, BASE_DIR)
-DATA_DIR = Path.joinpath(base_path, DATASET)
+input_dir = Path.joinpath(base_path, input_dir_name)
 
-file_to_df = clean_data(DATA_DIR, ALBANIAN_LANG_ISO_CODE, ENGLISH_LANG_ISO_CODE)
+# Read input data
+input_df = read_input(input_dir)
+
+# Clean input data
+cleaned_df = clean_data(input_df, ALBANIAN_LANG_ISO_CODE, ENGLISH_LANG_ISO_CODE)
 
 out_dir = Path.joinpath(base_path, "merged", DATASET)
 Path.mkdir(out_dir, parents=True, exist_ok=True)
 
-merge_csv(out_dir, file_to_df, ALBANIAN_LANG_ISO_CODE, ENGLISH_LANG_ISO_CODE)
+merge_csv(out_dir, cleaned_df, ALBANIAN_LANG_ISO_CODE, ENGLISH_LANG_ISO_CODE)
 
 path_merged_csv = Path.joinpath(
     base_path,
